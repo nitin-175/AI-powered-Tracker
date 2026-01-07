@@ -10,12 +10,10 @@ export default function Home() {
   const[showIntro, setShowIntro] = useState(true);
 
 useEffect(() => {
-    // Hide the IntroEffect after 1 second
     const timer = setTimeout(() => {
       setShowIntro(false);
     }, 3500);
 
-    // Cleanup timer when component unmounts
     return () => clearTimeout(timer);
   }, []);
 
