@@ -1,33 +1,16 @@
-import React, { useEffect, useState } from 'react'
-import HeroDummy from '../Components/HeroDummy'
-import Navbar from '../Components/Navbar'
-import IntroEffect from '../Components/IntroEffect'
+import Sidebar from "../Components/Sidebar";
+import Topbar from "../Components/Topbar";
 
 
 
-export default function Home() {
 
-  const[showIntro, setShowIntro] = useState(true);
-
-useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowIntro(false);
-    }, 3500);
-
-    return () => clearTimeout(timer);
-  }, []);
+export default function Dashboard() {
 
 
   return (
     <>
-      {showIntro ? (
-        <IntroEffect />
-      ) : (
-        <>
-          <Navbar />
-          <HeroDummy />
-        </>
-      )}
+      <Topbar/>
+      <Sidebar/>
     </>
 
   )
