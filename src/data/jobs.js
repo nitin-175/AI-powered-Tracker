@@ -12,6 +12,19 @@ export const jobs = [
     role: "SDE Intern",
     status: "Interview",
     date: "20 Aug 2025"
+  },
+  {
+    id: 3,
+    company: "Microsoft",
+    role: "Frontend Intern",
+    status: "Rejected",
+    date: "05 Aug 2025"
+  },
+  {
+    id:4,
+    company: "MetConnect",
+    role: "Programmer Intern",
+    status: "Selected",
+    date: "28 Nov 2025"
   }
 ];
-
