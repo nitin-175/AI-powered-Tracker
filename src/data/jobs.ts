@@ -1,6 +1,6 @@
 export const jobs = [
   {
-    id: 1,
+     id: 1,
     company: "Google",
     role: "Backend Intern",
     status: "Applied",
