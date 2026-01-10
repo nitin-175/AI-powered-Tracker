@@ -26,5 +26,12 @@ export const jobs = [
     role: "Programmer Intern",
     status: "Selected",
     date: "28 Nov 2025"
+  },
+  {
+    id:5,
+    company: "TCS",
+    role: "Java Developer",
+    status: "Applied",
+    date: "28 Dec 2025"
   }
 ];
