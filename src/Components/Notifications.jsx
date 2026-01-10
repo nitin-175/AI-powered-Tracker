@@ -45,12 +45,11 @@ export default function Notifications() {
       >
         <MdNotifications size={22} />
 
-        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
       </button>
 
       {/* Popup */}
       {open && (
-        <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50">
+        <div className="absolute right-0 mt-3 w-80 bg-blue-100 rounded-xl shadow-xl border border-gray-200 z-50">
           
           <div className="px-4 py-3 border-b">
             <p className="font-medium text-gray-800">Notifications</p>
