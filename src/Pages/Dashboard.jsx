@@ -1,5 +1,6 @@
 import JobFilters from "../Components/JobFilters";
 import JobTable from "../Components/JobTable";
+import Notifications from "../Components/Notifications";
 import StatCard from "../Components/StatCard";
 import { jobs as jobsData } from "../data/jobs";
 import { useState } from "react";
@@ -70,7 +71,7 @@ export default function Dashboard() {
         <JobTable jobs={filteredJobs} />
       </div>
 
-
+     
     </>
 
   )

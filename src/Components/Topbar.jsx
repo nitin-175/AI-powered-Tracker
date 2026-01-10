@@ -1,5 +1,6 @@
 import React from 'react'
 import { FiBell, FiUser, FiLogOut } from 'react-icons/fi'
+import Notifications from './Notifications'
 
 
 
@@ -14,8 +15,8 @@ export default function Topbar() {
 
         <div className='flex gap-8'>
 
-          <button className=" hover:text-blue-600 ">
-            <FiBell size={20} />
+          <button className=" hover:text-blue-600 " >
+            <Notifications />
           </button>
 
           <button className=" hover:text-blue-600">
@@ -29,6 +30,7 @@ export default function Topbar() {
         </div>
 
       </div>
+
     </div>
   )
 }
