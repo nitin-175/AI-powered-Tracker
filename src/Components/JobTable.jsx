@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function JobTable({ jobs }) {
   return (
-    <div className=" rounded-xl shadow-sm overflow-hidden ml-70 mt-10">
+    <div className=" rounded-xl shadow-sm overflow-hidden ml-70 ">
       <table className="w-full">
         <thead className="bg-blue-700">
           <tr className="text-left text-sm text-white">

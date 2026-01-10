@@ -24,7 +24,7 @@ export const jobs = [
     id:4,
     company: "MetConnect",
     role: "Programmer Intern",
-    status: "Selected",
+    status: "Offer",
     date: "28 Nov 2025"
   },
   {

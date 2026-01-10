@@ -1,7 +1,6 @@
 import JobFilters from "../Components/JobFilters";
 import JobTable from "../Components/JobTable";
 import StatCard from "../Components/StatCard";
-
 import { jobs as jobsData } from "../data/jobs";
 import { useState } from "react";
 
