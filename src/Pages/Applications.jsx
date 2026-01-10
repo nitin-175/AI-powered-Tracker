@@ -1,11 +1,15 @@
 
 import React from 'react'
-import ComingSoon from './ComingSoon'
+import JobTable from '../Components/JobTable'
+import { jobs as jobsData } from "../data/jobs";
 
 export default function Applications() {
+  
+
   return (
+
     <div>
-        <ComingSoon/>
+        <JobTable jobs={jobsData} />
     </div>
   )
 }
