@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Settings() {
   return (
-    <div className="ml-65 mt-10 px-6 max-w-5xl space-y-8">
+    <div className="ml-65 mt-14 px-6 max-w-5xl space-y-8">
 
       {/* Header */}
       <div>
@@ -26,11 +26,11 @@ export default function Settings() {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <p className="text-xs text-gray-500">Name</p>
-            <p className="font-medium text-gray-800">John Doe</p>
+            <p className="font-medium text-gray-800">Nitin Kumar Maurya</p>
           </div>
           <div>
             <p className="text-xs text-gray-500">Email</p>
-            <p className="font-medium text-gray-800">john@example.com</p>
+            <p className="font-medium text-gray-800">Nitin@gmail.com</p>
           </div>
         </div>
       </section>
