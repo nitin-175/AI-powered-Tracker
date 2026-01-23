@@ -7,3 +7,20 @@ export const fetchJobs = async () => {
   }
   return response.json();
 };
+
+
+export const addJob = async (job) => {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(job),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to add job");
+  }
+
+  return response.json();
+};
