@@ -1,20 +1,29 @@
 import JobFilters from "../Components/JobFilters";
 import JobTable from "../Components/JobTable";
-import Notifications from "../Components/Notifications";
 import StatCard from "../Components/StatCard";
-import { jobs as jobsData } from "../data/jobs";
-import { useState } from "react";
-
-
-
+import { fetchJobs } from "../services/jobService";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-
-
+  const [jobs, setJobs] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const [jobs, setJobs] = useState(jobsData);
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const data = await fetchJobs();
+        setJobs(data);
+      } catch (err) {
+        console.error("Failed to load jobs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobs();
+  }, []);
 
   const totalApplications = jobs.length;
 
@@ -23,7 +32,10 @@ export default function Dashboard() {
   ).length;
 
   const respondedJobs = jobs.filter(
-    (job) => job.status === "Interview" || job.status === "Offer" || job.status === "Selected"
+    (job) =>
+      job.status === "Interview" ||
+      job.status === "Offer" ||
+      job.status === "Selected"
   ).length;
 
   const responseRate =
@@ -31,8 +43,7 @@ export default function Dashboard() {
       ? 0
       : Math.round((respondedJobs / totalApplications) * 100);
 
-
-  const filteredJobs = jobsData.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.company.toLowerCase().includes(search.toLowerCase()) ||
       job.role.toLowerCase().includes(search.toLowerCase());
@@ -43,12 +54,14 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus;
   });
 
-
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading dashboard...</p>;
+  }
 
   return (
     <>
+      {/* STATS */}
       <div className="grid grid-cols-3 p-10">
-
         <StatCard title="Total Applications" value={totalApplications} />
         <StatCard title="Active Applications" value={activeApplications} />
         <StatCard
@@ -56,10 +69,9 @@ export default function Dashboard() {
           value={`${responseRate}%`}
           subtitle="Based on responses"
         />
+      </div>
 
-    
-      </div> 
-
+      {/* FILTERS + TABLE */}
       <div className="p-6">
         <JobFilters
           search={search}
@@ -70,9 +82,6 @@ export default function Dashboard() {
 
         <JobTable jobs={filteredJobs} />
       </div>
-
-     
     </>
-
-  )
+  );
 }

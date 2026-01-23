@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchJobs } from "../services/jobService";
-import JobTable from "../components/JobTable";
+import JobTable from "../Components/JobTable";
 
 const Applications = () => {
   const [jobs, setJobs] = useState([]);
