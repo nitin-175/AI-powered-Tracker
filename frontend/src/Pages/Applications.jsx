@@ -1,34 +1,41 @@
-import React, { useState } from "react";
-import JobTable from "../Components/JobTable";
-import { jobs as jobsData } from "../data/jobs";
-import JobFilters from "../Components/JobFilters";
+import { useEffect, useState } from "react";
+import { fetchJobs } from "../services/jobService";
+import JobTable from "../components/JobTable";
 
-export default function Applications() {
-	const [search, setSearch] = useState("");
-	const [status, setStatus] = useState("");
+const Applications = () => {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-	const filteredJobs = jobsData.filter((job) => {
-		const matchesSearch =
-			job.company.toLowerCase().includes(search.toLowerCase()) ||
-			job.role.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const data = await fetchJobs();
+        setJobs(data);
+      } catch (err) {
+        setError("Unable to load applications");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-		const matchesStatus = status === "" || job.status === status;
+    loadJobs();
+  }, []);
 
-		return matchesSearch && matchesStatus;
-	});
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading applications...</p>;
+  }
 
-	return (
-		<>
-			<div className="mt-18">
-				<JobFilters
-					search={search}
-					setSearch={setSearch}
-					status={status}
-					setStatus={setStatus}
-				/>
+  if (error) {
+    return <p className="p-6 text-red-500">{error}</p>;
+  }
 
-				<JobTable jobs={filteredJobs} />
-			</div>
-		</>
-	);
-}
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl  font-semibold mb-4">Applications</h1>
+      <JobTable jobs={jobs} />
+    </div>
+  );
+};
+
+export default Applications;
