@@ -80,7 +80,7 @@ export default function Dashboard() {
           setStatus={setStatus}
         />
 
-        <JobTable jobs={filteredJobs} />
+        <JobTable jobs={filteredJobs} showActions={false} />
       </div>
     </>
   );

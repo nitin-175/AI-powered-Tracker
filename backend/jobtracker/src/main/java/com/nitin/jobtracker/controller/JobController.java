@@ -31,4 +31,19 @@ public class JobController {
     public void deleteJob(@PathVariable Long id) {
         jobRepository.deleteById(id);
     }
+
+    @PutMapping("/{id}")
+    public Job updateJob(@PathVariable Long id, @RequestBody Job updatedJob) {
+        return jobRepository.findById(id)
+                .map(job -> {
+                    job.setCompany(updatedJob.getCompany());
+                    job.setRole(updatedJob.getRole());
+                    job.setJobLink(updatedJob.getJobLink());
+                    job.setStatus(updatedJob.getStatus());
+                    job.setAppliedDate(updatedJob.getAppliedDate());
+                    return jobRepository.save(job);
+                })
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+    }
+
 }

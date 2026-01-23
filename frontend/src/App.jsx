@@ -28,7 +28,7 @@ function App() {
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/add-job" element={<AddJob />} />
-        <Route path="/applications" element={<Applications />} />
+        <Route path="/applications" element={<Applications />}  />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/resume-manager" element={<ResumeMaker />} />
         <Route path="/auto-apply" element={<AutoApply />} />
