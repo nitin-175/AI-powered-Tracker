@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteJob, updateJob } from "../services/jobService";
+import { updateJob, deleteJob } from "../services/jobService";
 
 export default function JobTable({ jobs, refreshJobs }) {
   const [editingJob, setEditingJob] = useState(null);
@@ -15,11 +15,12 @@ export default function JobTable({ jobs, refreshJobs }) {
 
   const saveEdit = async () => {
     try {
+      
       setSaving(true);
       await updateJob(editingJob.id, editingJob);
       setEditingJob(null);
-      refreshJobs();
-    } catch (err) {
+      refreshJobs(); // 🔄 reload from Applications
+    } catch {
       alert("Failed to update job");
     } finally {
       setSaving(false);
@@ -28,16 +29,18 @@ export default function JobTable({ jobs, refreshJobs }) {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this job?")) return;
-    await deleteJob(id);
-    refreshJobs();
+    try {
+      await deleteJob(id);
+      refreshJobs(); // 🔄 reload from Applications
+    } catch {
+      alert("Failed to delete job");
+    }
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-
-      {/* RESPONSIVE WRAPPER */}
       <div className="overflow-x-auto">
-        <table className="min-w-[800px] w-full">
+        <table className="min-w-[900px] w-full">
           <thead className="bg-blue-700">
             <tr className="text-white text-sm">
               <th className="px-4 py-3 text-left">Company</th>
@@ -51,7 +54,7 @@ export default function JobTable({ jobs, refreshJobs }) {
           <tbody>
             {jobs.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-8 text-center text-gray-400">
+                <td colSpan="5" className="py-6 text-center text-gray-400">
                   No applications found
                 </td>
               </tr>
@@ -60,10 +63,7 @@ export default function JobTable({ jobs, refreshJobs }) {
                 const isEditing = editingJob?.id === job.id;
 
                 return (
-                  <tr
-                    key={job.id}
-                    className="border-t text-sm hover:bg-gray-50 transition"
-                  >
+                  <tr key={job.id} className="border-t text-sm hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">
                       {job.company}
                     </td>
@@ -90,18 +90,7 @@ export default function JobTable({ jobs, refreshJobs }) {
                           <option>Rejected</option>
                         </select>
                       ) : (
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium
-                            ${
-                              job.status === "Applied"
-                                ? "bg-blue-100 text-blue-700"
-                                : job.status === "Interview"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : job.status === "Offer"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                        >
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           {job.status}
                         </span>
                       )}
@@ -117,14 +106,13 @@ export default function JobTable({ jobs, refreshJobs }) {
                           <button
                             onClick={saveEdit}
                             disabled={saving}
-                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                            className="px-3 py-1 bg-green-600 text-white rounded"
                           >
                             {saving ? "Saving..." : "Save"}
                           </button>
-
                           <button
                             onClick={cancelEdit}
-                            className="px-3 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300"
+                            className="px-3 py-1 bg-gray-300 rounded"
                           >
                             Cancel
                           </button>
@@ -133,14 +121,13 @@ export default function JobTable({ jobs, refreshJobs }) {
                         <>
                           <button
                             onClick={() => startEdit(job)}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-3 py-1 bg-blue-600 text-white rounded"
                           >
                             Edit
                           </button>
-
                           <button
                             onClick={() => handleDelete(job.id)}
-                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="px-3 py-1 bg-red-600 text-white rounded"
                           >
                             Delete
                           </button>

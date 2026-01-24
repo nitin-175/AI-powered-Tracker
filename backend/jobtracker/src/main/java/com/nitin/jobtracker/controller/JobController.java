@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/jobs")
-@CrossOrigin(origins = "http://localhost:5173")
 public class JobController {
 
     private final JobRepository jobRepository;
@@ -17,12 +16,16 @@ public class JobController {
         this.jobRepository = jobRepository;
     }
 
-    @GetMapping("/{id}")
-public Job getJobById(@PathVariable Long id) {
-    return jobRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Job not found"));
-}
+    @GetMapping
+    public List<Job> getAllJobs() {
+        return jobRepository.findAll();
+    }
 
+    @GetMapping("/{id}")
+    public Job getJobById(@PathVariable Long id) {
+        return jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+    }
 
     @PostMapping
     public Job addJob(@RequestBody Job job) {
@@ -31,16 +34,16 @@ public Job getJobById(@PathVariable Long id) {
 
     @PutMapping("/{id}")
     public Job updateJob(@PathVariable Long id, @RequestBody Job job) {
-        Job existingJob = jobRepository.findById(id)
+        Job existing = jobRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        existingJob.setCompany(job.getCompany());
-        existingJob.setRole(job.getRole());
-        existingJob.setStatus(job.getStatus());
-        existingJob.setAppliedDate(job.getAppliedDate());
-        existingJob.setJobLink(job.getJobLink());
+        existing.setCompany(job.getCompany());
+        existing.setRole(job.getRole());
+        existing.setStatus(job.getStatus());
+        existing.setAppliedDate(job.getAppliedDate());
+        existing.setJobLink(job.getJobLink());
 
-        return jobRepository.save(existingJob);
+        return jobRepository.save(existing);
     }
 
     @DeleteMapping("/{id}")

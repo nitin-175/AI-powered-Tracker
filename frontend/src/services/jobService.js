@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api/jobs/";
+const API_URL = "http://localhost:8080/api/jobs";
 
 export const fetchJobs = async () => {
   const res = await fetch(API_URL);
@@ -31,4 +31,6 @@ export const deleteJob = async (id) => {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Delete failed");
+
+  return true;
 };
