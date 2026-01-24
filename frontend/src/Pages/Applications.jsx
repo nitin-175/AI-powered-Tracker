@@ -1,24 +1,25 @@
 import { useEffect, useState } from "react";
+import JobTable from "../components/JobTable";
 import { fetchJobs } from "../services/jobService";
-import JobTable from "../Components/JobTable";
 
 const Applications = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadJobs = async () => {
-      try {
-        const data = await fetchJobs();
-        setJobs(data);
-      } catch (err) {
-        setError("Unable to load applications");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchJobs();
+      setJobs(data);
+    } catch {
+      setError("Unable to load applications");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadJobs();
   }, []);
 
@@ -32,8 +33,9 @@ const Applications = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl  font-semibold mb-4">Applications</h1>
-      <JobTable jobs={jobs} />
+      <h1 className="text-2xl font-semibold mb-4">Applications</h1>
+
+      <JobTable jobs={jobs} refreshJobs={loadJobs} />
     </div>
   );
 };

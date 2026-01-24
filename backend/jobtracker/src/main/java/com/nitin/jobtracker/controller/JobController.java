@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/jobs/")
+@RequestMapping("/api/jobs")
 @CrossOrigin(origins = "http://localhost:5173")
 public class JobController {
 
@@ -17,33 +17,34 @@ public class JobController {
         this.jobRepository = jobRepository;
     }
 
-    @GetMapping
-    public List<Job> getAllJobs() {
-        return jobRepository.findAll();
-    }
+    @GetMapping("/{id}")
+public Job getJobById(@PathVariable Long id) {
+    return jobRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Job not found"));
+}
+
 
     @PostMapping
     public Job addJob(@RequestBody Job job) {
         return jobRepository.save(job);
     }
 
+    @PutMapping("/{id}")
+    public Job updateJob(@PathVariable Long id, @RequestBody Job job) {
+        Job existingJob = jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        existingJob.setCompany(job.getCompany());
+        existingJob.setRole(job.getRole());
+        existingJob.setStatus(job.getStatus());
+        existingJob.setAppliedDate(job.getAppliedDate());
+        existingJob.setJobLink(job.getJobLink());
+
+        return jobRepository.save(existingJob);
+    }
+
     @DeleteMapping("/{id}")
     public void deleteJob(@PathVariable Long id) {
         jobRepository.deleteById(id);
     }
-
-    @PutMapping("/{id}")
-    public Job updateJob(@PathVariable Long id, @RequestBody Job updatedJob) {
-        return jobRepository.findById(id)
-                .map(job -> {
-                    job.setCompany(updatedJob.getCompany());
-                    job.setRole(updatedJob.getRole());
-                    job.setJobLink(updatedJob.getJobLink());
-                    job.setStatus(updatedJob.getStatus());
-                    job.setAppliedDate(updatedJob.getAppliedDate());
-                    return jobRepository.save(job);
-                })
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-    }
-
 }
