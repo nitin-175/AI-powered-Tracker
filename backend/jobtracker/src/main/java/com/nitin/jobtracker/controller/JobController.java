@@ -1,53 +1,44 @@
 package com.nitin.jobtracker.controller;
 
 import com.nitin.jobtracker.model.Job;
-import com.nitin.jobtracker.repository.JobRepository;
+import com.nitin.jobtracker.service.JobService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/jobs")
+@CrossOrigin(origins = "http://localhost:5173")
 public class JobController {
-
-    private final JobRepository jobRepository;
-
-    public JobController(JobRepository jobRepository) {
-        this.jobRepository = jobRepository;
-    }
-
+    
+    @Autowired
+    private JobService jobService;
+    
     @GetMapping
-    public List<Job> getAllJobs() {
-        return jobRepository.findAll();
+    public ResponseEntity<List<Job>> getAllJobs() {
+        return ResponseEntity.ok(jobService.getAllJobs());
     }
-
+    
     @GetMapping("/{id}")
-    public Job getJobById(@PathVariable Long id) {
-        return jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+    public ResponseEntity<Job> getJobById(@PathVariable Long id) {
+        return ResponseEntity.ok(jobService.getJobById(id));
     }
-
+    
     @PostMapping
-    public Job addJob(@RequestBody Job job) {
-        return jobRepository.save(job);
+    public ResponseEntity<Job> createJob(@RequestBody Job job) {
+        return ResponseEntity.ok(jobService.createJob(job));
     }
-
+    
     @PutMapping("/{id}")
-    public Job updateJob(@PathVariable Long id, @RequestBody Job job) {
-        Job existing = jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        existing.setCompany(job.getCompany());
-        existing.setRole(job.getRole());
-        existing.setStatus(job.getStatus());
-        existing.setAppliedDate(job.getAppliedDate());
-        existing.setJobLink(job.getJobLink());
-
-        return jobRepository.save(existing);
+    public ResponseEntity<Job> updateJob(@PathVariable Long id, @RequestBody Job job) {
+        return ResponseEntity.ok(jobService.updateJob(id, job));
     }
-
+    
     @DeleteMapping("/{id}")
-    public void deleteJob(@PathVariable Long id) {
-        jobRepository.deleteById(id);
+    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
+        jobService.deleteJob(id);
+        return ResponseEntity.noContent().build();
     }
 }
