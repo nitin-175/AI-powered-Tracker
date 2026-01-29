@@ -82,6 +82,8 @@ export default function Dashboard() {
 
         
       </div>
+
+      <JobTable/>
     </>
   );
 }
