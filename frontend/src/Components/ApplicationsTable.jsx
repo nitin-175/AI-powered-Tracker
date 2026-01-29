@@ -1,4 +1,4 @@
-export default function ApplicationsTable({ jobs, onEdit, onDelete }) {
+export default function ApplicationsTable({ jobs, onEdit, onDelete, onAnalyze, aiLoading }) {
   const getStatusStyle = (status) => {
     switch (status?.toLowerCase()) {
       case "applied":
@@ -23,9 +23,8 @@ export default function ApplicationsTable({ jobs, onEdit, onDelete }) {
             <th className="px-5 py-3 text-left font-semibold">Company</th>
             <th className="px-5 py-3 text-left font-semibold">Role</th>
             <th className="px-5 py-3 text-left font-semibold">Status</th>
-            <th className="px-5 py-3 text-left font-semibold">
-              Applied Date
-            </th>
+            <th className="px-5 py-3 text-left font-semibold">Applied Date</th>
+            <th className="px-5 py-3 text-center font-semibold">AI</th>
             <th className="px-5 py-3 text-center font-semibold">Actions</th>
           </tr>
         </thead>
@@ -33,10 +32,7 @@ export default function ApplicationsTable({ jobs, onEdit, onDelete }) {
         <tbody>
           {jobs.length === 0 ? (
             <tr>
-              <td
-                colSpan="6"
-                className="text-center py-10 text-gray-400"
-              >
+              <td colSpan="7" className="text-center py-10 text-gray-400">
                 No applications found
               </td>
             </tr>
@@ -72,6 +68,16 @@ export default function ApplicationsTable({ jobs, onEdit, onDelete }) {
                   {job.appliedDate
                     ? new Date(job.appliedDate).toLocaleDateString()
                     : "-"}
+                </td>
+
+                <td className="px-5 py-4 text-center">
+                  <button
+                    onClick={() => onAnalyze(job.id)}
+                    disabled={aiLoading}
+                    className="px-4 py-1.5 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? 'Analyzing...' : 'Analyze'}
+                  </button>
                 </td>
 
                 <td className="px-5 py-4 text-center">
