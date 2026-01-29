@@ -1,4 +1,4 @@
-import JobFilters from "../Components/JobFilters";
+
 import JobTable from "../Components/JobTable";
 import StatCard from "../Components/StatCard";
 import { fetchJobs } from "../services/jobService";
@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState([]);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,16 +41,6 @@ export default function Dashboard() {
       ? 0
       : Math.round((respondedJobs / totalApplications) * 100);
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.company.toLowerCase().includes(search.toLowerCase()) ||
-      job.role.toLowerCase().includes(search.toLowerCase());
-
-    const matchesStatus =
-      status === "" || job.status === status;
-
-    return matchesSearch && matchesStatus;
-  });
 
   if (loading) {
     return <p className="p-6 text-gray-500">Loading dashboard...</p>;
@@ -61,7 +49,7 @@ export default function Dashboard() {
   return (
     <>
       {/* STATS */}
-      <div className="grid grid-cols-3 p-10">
+      <div className="grid grid-cols-3 p-5 -mb-10">
         <StatCard title="Total Applications" value={totalApplications} />
         <StatCard title="Active Applications" value={activeApplications} />
         <StatCard
@@ -71,17 +59,8 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* FILTERS + TABLE */}
-      <div className="p-6">
-        <JobFilters
-          search={search}
-          setSearch={setSearch}
-          status={status}
-          setStatus={setStatus}
-        />
+     
 
-        
-      </div>
 
       <JobTable/>
     </>
