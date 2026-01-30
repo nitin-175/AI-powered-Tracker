@@ -11,6 +11,12 @@ export default function Applications() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [editingJob, setEditingJob] = useState(null);
 
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiRaw, setAiRaw] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -42,6 +48,60 @@ export default function Applications() {
     setEditingJob(null);
   };
 
+  // ✅ FIXED AI CALL (robust + safe)
+  const analyzeJobAI = async (jobId) => {
+    setAiLoading(true);
+    setAiResult(null);
+    setAiRaw("");
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/ai/analyze/${jobId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resume:
+              "Full-stack developer with Java, Spring Boot and React. Built AI powered job tracker."
+          })
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      const raw = data.analysis || "";
+      setAiRaw(raw);
+
+      let parsed = null;
+
+      try {
+        const clean = raw.replace(/```json|```/g, "").trim();
+        parsed = JSON.parse(clean);
+      } catch {
+        // Gemini sometimes returns plain text
+        parsed = null;
+      }
+
+      setAiResult(parsed);
+      setSelectedJob(jobs.find((j) => j.id === jobId));
+      setShowAIModal(true);
+
+    } catch (e) {
+      console.error(e);
+      alert("AI request failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,7 +118,6 @@ export default function Applications() {
     <div className="p-6 ml-70 mt-10">
       <h1 className="text-3xl font-semibold mb-6">Applications</h1>
 
-      {/* Filters */}
       <div className="flex gap-4 mb-6">
         <input
           className="flex-1 px-4 py-2 border rounded-lg"
@@ -84,6 +143,8 @@ export default function Applications() {
         jobs={filteredJobs}
         onEdit={setEditingJob}
         onDelete={handleDelete}
+        onAnalyze={analyzeJobAI}
+        aiLoading={aiLoading}
       />
 
       {editingJob && (
@@ -93,6 +154,76 @@ export default function Applications() {
           onSave={handleSaveEdit}
         />
       )}
+
+      {/* ✅ AI MODAL */}
+      {showAIModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full overflow-y-auto shadow-xl">
+
+            <div className="bg-blue-600 text-white p-5 rounded-t-2xl flex justify-between">
+              <div>
+                <div className="text-xl font-semibold">AI Job Analysis</div>
+                <div className="text-sm text-blue-100">
+                  {selectedJob.company} – {selectedJob.role}
+                </div>
+              </div>
+              <button onClick={() => setShowAIModal(false)}>✕</button>
+            </div>
+
+            <div className="p-6 space-y-6">
+
+              {aiResult ? (
+                <>
+                  <div className="text-center">
+                    <div className="text-5xl font-bold text-blue-600">
+                      {aiResult.matchScore}%
+                    </div>
+                    <div className="text-gray-600">Match Score</div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Strengths</h3>
+                    {aiResult.strengths?.map((s, i) => (
+                      <div key={i} className="text-sm bg-green-50 p-2 rounded mb-2">
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Improvements</h3>
+                    {aiResult.improvements?.map((s, i) => (
+                      <div key={i} className="text-sm bg-amber-50 p-2 rounded mb-2">
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                // ✅ fallback when Gemini did not return JSON
+                <div>
+                  <h3 className="font-semibold mb-3">AI Response</h3>
+                  <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded">
+                    {aiRaw}
+                  </pre>
+                </div>
+              )}
+
+            </div>
+
+            <div className="p-4 border-t text-center">
+              <button
+                onClick={() => setShowAIModal(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

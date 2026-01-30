@@ -1,222 +1,163 @@
 package com.nitin.jobtracker.service;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GeminiService {
-    
+
     @Value("${gemini.api.key}")
     private String apiKey;
-    
+
     @Value("${gemini.api.url}")
     private String apiUrl;
-    
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final Gson gson = new Gson();
-    
-    // AI Feature 1: Analyze Job Match
+
     public String analyzeJobMatch(String jobDescription, String resume) {
-        String prompt = buildAnalysisPrompt(jobDescription, resume);
-        return callGeminiAPI(prompt);
+
+        String prompt =
+                "You are an ATS system. Compare the JOB and the RESUME and return ONLY valid JSON with this exact structure:\n" +
+                        "{ \"matchScore\": number, \"strengths\": [], \"improvements\": [], \"keySkillsToHighlight\": [] }\n\n" +
+                        "JOB:\n" + jobDescription + "\n\nRESUME:\n" + resume;
+
+        return callGemini(prompt, true);
     }
-    
-    // AI Feature 2: Generate Cover Letter
+
     public String generateCoverLetter(String company, String role, String jobDescription, String resume) {
-        String prompt = buildCoverLetterPrompt(company, role, jobDescription, resume);
-        return callGeminiAPI(prompt);
+
+        String prompt =
+                "Write a professional ATS-friendly cover letter of 180 to 220 words for the role of " +
+                        role + " at " + company + ".\n\nJOB:\n" + jobDescription + "\n\nRESUME:\n" + resume;
+
+        return callGemini(prompt, false);
     }
-    
-    // AI Feature 3: Generate Application Email
+
     public String generateApplicationEmail(String company, String role, String hiringManager) {
-        String prompt = buildEmailPrompt(company, role, hiringManager);
-        return callGeminiAPI(prompt);
+
+        String prompt =
+                "Write a short and professional job application email for the role of " + role +
+                        " at " + company + " addressed to " + hiringManager + ".";
+
+        return callGemini(prompt, false);
     }
-    
-    // AI Feature 4: Improve Resume for Job
+
     public String getResumeImprovements(String jobDescription, String resume) {
-        String prompt = "Analyze this resume against the job description. Suggest 5 specific improvements:\n\n" +
-                       "Job Description:\n" + jobDescription + "\n\n" +
-                       "Resume:\n" + resume + "\n\n" +
-                       "Return JSON: {\"improvements\": [\"improvement 1\", \"improvement 2\", ...]}";
-        return callGeminiAPI(prompt);
+
+        String prompt =
+                "Based on the JOB and RESUME, list clear bullet points for resume improvements.\n\n" +
+                        "JOB:\n" + jobDescription + "\n\nRESUME:\n" + resume;
+
+        return callGemini(prompt, false);
     }
-    
-    // Prompt builders
-    private String buildAnalysisPrompt(String jobDesc, String resume) {
-        return "Analyze the match between this job and resume. Return ONLY valid JSON.\n\n" +
-               "Job Description:\n" + jobDesc + "\n\n" +
-               "Resume:\n" + resume + "\n\n" +
-               "Return ONLY this exact JSON format:\n" +
-               "{\n" +
-               "  \"matchScore\": 85,\n" +
-               "  \"strengths\": [\"Strength 1\", \"Strength 2\", \"Strength 3\"],\n" +
-               "  \"improvements\": [\"Add X\", \"Highlight Y\", \"Emphasize Z\"],\n" +
-               "  \"keySkillsToHighlight\": [\"Java\", \"Spring Boot\", \"React\"]\n" +
-               "}";
-    }
-    
-    private String buildCoverLetterPrompt(String company, String role, String jobDesc, String resume) {
-        return "Write a professional cover letter (250-300 words).\n\n" +
-               "Company: " + company + "\n" +
-               "Role: " + role + "\n" +
-               "Job Description: " + jobDesc + "\n" +
-               "Candidate Background: " + resume + "\n\n" +
-               "Requirements:\n" +
-               "- Professional and enthusiastic tone\n" +
-               "- Highlight 3-4 most relevant skills from resume\n" +
-               "- Show genuine interest in company\n" +
-               "- End with strong call to action\n" +
-               "- Format: [Opening] [Body with skills] [Closing]";
-    }
-    
-    private String buildEmailPrompt(String company, String role, String hiringManager) {
-        return "Write a professional cold email for job application.\n\n" +
-               "Company: " + company + "\n" +
-               "Role: " + role + "\n" +
-               "Recipient: " + (hiringManager != null ? hiringManager : "Hiring Team") + "\n\n" +
-               "Format:\n" +
-               "Subject: [Write subject line]\n\n" +
-               "Body:\n" +
-               "[Write 3-4 paragraph email under 150 words]\n\n" +
-               "Requirements:\n" +
-               "- Include attention-grabbing subject line\n" +
-               "- Professional but conversational tone\n" +
-               "- Express interest and value proposition\n" +
-               "- Mention resume attachment\n" +
-               "- Request for consideration/interview";
-    }
-    
-    // Main API call method with MOCK MODE for quota issues
-    private String callGeminiAPI(String prompt) {
+
+    private String callGemini(String prompt, boolean cleanJson) {
+
         try {
-            // MOCK MODE - Enable this if quota exceeded
-            boolean MOCK_MODE = true;  // Change to false when quota resets
-            
-            if (MOCK_MODE) {
-                System.out.println("🧪 MOCK MODE - Simulating AI response");
-                return getMockResponse(prompt);
-            }
-            
-            // Real Gemini API call
+
             String url = apiUrl + "?key=" + apiKey;
-            
-            Map<String, Object> requestBody = new HashMap<>();
-            Map<String, Object> content = new HashMap<>();
-            Map<String, String> part = new HashMap<>();
-            
-            part.put("text", prompt);
-            content.put("parts", List.of(part));
-            requestBody.put("contents", List.of(content));
-            
+
+            Map<String, Object> body = Map.of(
+                    "contents", List.of(
+                            Map.of(
+                                    "role", "user",
+                                    "parts", List.of(
+                                            Map.of("text", prompt)
+                                    )
+                            )
+                    ),
+                    "generationConfig", Map.of(
+                            "temperature", cleanJson ? 0.1 : 0.7,
+                            "topP", 0.95,
+                            "topK", 40
+                    )
+            );
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-            
-            // Parse response
-            JsonObject jsonResponse = gson.fromJson(response.getBody(), JsonObject.class);
-            JsonArray candidates = jsonResponse.getAsJsonArray("candidates");
-            
-            if (candidates != null && candidates.size() > 0) {
-                JsonObject firstCandidate = candidates.get(0).getAsJsonObject();
-                JsonObject content2 = firstCandidate.getAsJsonObject("content");
-                JsonArray parts = content2.getAsJsonArray("parts");
-                
-                if (parts != null && parts.size() > 0) {
-                    return parts.get(0).getAsJsonObject().get("text").getAsString();
-                }
+
+            HttpEntity<Map<String, Object>> request =
+                    new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(url, request, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return "{\"error\":\"Gemini returned empty response\"}";
             }
-            
-            return "Error: No response from AI";
-            
+
+            return extractText(response.getBody(), cleanJson);
+
+        } catch (HttpStatusCodeException e) {
+
+            return "{\"error\":\"Gemini HTTP error\",\"status\":" +
+                    e.getStatusCode().value() +
+                    ",\"body\":" +
+                    gson.toJson(e.getResponseBodyAsString()) +
+                    "}";
+
         } catch (Exception e) {
-            e.printStackTrace();
-            return "Error: " + e.getMessage();
+
+            return "{\"error\":\"Gemini request failed\",\"message\":\"" +
+                    e.getMessage().replace("\"", "'") + "\"}";
         }
     }
-    
-    // Mock responses for testing without API quota
-    private String getMockResponse(String prompt) {
-        if (prompt.contains("Analyze")) {
-            return """
-            {
-              "matchScore": 78,
-              "strengths": [
-                "Strong Java and Spring Boot experience matches backend requirements",
-                "React.js skills align with frontend tech stack mentioned",
-                "Full-stack project portfolio demonstrates end-to-end capability"
-              ],
-              "improvements": [
-                "Add specific metrics (e.g., 'Reduced API response time by 40%')",
-                "Mention cloud platform experience (AWS/Azure) if available",
-                "Highlight system design or scalability achievements"
-              ],
-              "keySkillsToHighlight": ["Spring Boot", "React", "Java", "REST APIs", "PostgreSQL", "Git"]
-            }
-            """;
+
+    private String extractText(String raw, boolean cleanJson) {
+
+        JsonObject root = gson.fromJson(raw, JsonObject.class);
+
+        if (root == null || !root.has("candidates")) {
+            return "{\"error\":\"Invalid Gemini response format\"}";
         }
-        
-        if (prompt.contains("cover")) {
-        String company = extractCompany(prompt);
-        String role = extractRole(prompt);
-        return "Dear Hiring Manager,\n\n" +
-               "I am writing to express my strong interest in the " + role + " position at " + company + ". " +
-               "As a passionate full-stack developer with hands-on experience in Java, Spring Boot, and React, " +
-               "I am excited about the opportunity to contribute to your innovative team.\n\n" +
-               "My technical background aligns perfectly with your requirements. I have successfully built " +
-               "production-ready applications including an AI-powered job tracker using Spring Boot for the backend " +
-               "and React for a responsive frontend. My experience with RESTful APIs, database design, and modern " +
-               "development practices has equipped me to deliver scalable, maintainable solutions.\n\n" +
-               "What particularly excites me about " + company + " is your commitment to cutting-edge technology " +
-               "and user-focused solutions. I am eager to bring my problem-solving abilities, quick learning capacity, " +
-               "and collaborative mindset to your team.\n\n" +
-               "I would welcome the opportunity to discuss how my skills and enthusiasm can contribute to " + 
-               company + "'s continued success. Thank you for considering my application.\n\n" +
-               "Best regards,\n[Your Name]";
-    }
-        
-         if (prompt.contains("email")) {
-        String company = extractCompany(prompt);
-        String role = extractRole(prompt);
-        return "Subject: Application for " + role + " - Eager Full-Stack Developer\n\n" +
-               "Dear Hiring Team,\n\n" +
-               "I hope this email finds you well. I recently came across the " + role + " opening at " + 
-               company + " and was immediately drawn to the opportunity.\n\n" +
-               "As a full-stack developer with strong expertise in Java, Spring Boot, and React, I have built " +
-               "several production-ready applications that solve real-world problems. My recent project, an " +
-               "AI-powered job application tracker, showcases my ability to integrate modern technologies and " +
-               "deliver user-centric solutions.\n\n" +
-               "I have attached my resume for your review. I would greatly appreciate the opportunity to discuss " +
-               "how my technical skills and passion for development can contribute to your team.\n\n" +
-               "Thank you for your time and consideration. I look forward to hearing from you.\n\n" +
-               "Best regards,\n[Your Name]\n[Your Phone]\n[Your Email]";
-    }
-    
-    return "Mock AI response generated successfully";
-}
-    
-    private String extractCompany(String prompt) {
-        if (prompt.contains("Company:")) {
-            return prompt.split("Company:")[1].split("\n")[0].trim();
+
+        JsonArray candidates = root.getAsJsonArray("candidates");
+
+        if (candidates == null || candidates.isEmpty()) {
+            return "{\"error\":\"No candidates returned by Gemini\"}";
         }
-        return "[Company Name]";
-    }
-    
-    private String extractRole(String prompt) {
-        if (prompt.contains("Role:")) {
-            return prompt.split("Role:")[1].split("\n")[0].trim();
+
+        JsonObject first = candidates.get(0).getAsJsonObject();
+
+        if (!first.has("content")) {
+            return "{\"error\":\"No content in Gemini response\"}";
         }
-        return "[Role Name]";
+
+        JsonObject content = first.getAsJsonObject("content");
+
+        if (!content.has("parts")) {
+            return "{\"error\":\"No parts in Gemini response\"}";
+        }
+
+        JsonArray parts = content.getAsJsonArray("parts");
+
+        if (parts == null || parts.isEmpty()) {
+            return "{\"error\":\"Empty parts in Gemini response\"}";
+        }
+
+        JsonObject part = parts.get(0).getAsJsonObject();
+
+        if (!part.has("text")) {
+            return "{\"error\":\"No text field in Gemini response\"}";
+        }
+
+        String text = part.get("text").getAsString();
+
+        if (!cleanJson) return text;
+
+        return text
+                .replace("```json", "")
+                .replace("```", "")
+                .trim();
     }
 }
