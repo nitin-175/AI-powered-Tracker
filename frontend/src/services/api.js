@@ -1,73 +1,80 @@
-// src/services/api.js - COMPLETE API SERVICE
+const API_BASE_URL = "http://localhost:8080/api";
 
-// Base API URL - your Spring Boot backend
-const API_BASE_URL = 'http://localhost:8080/api';
-
-// Generic API call function
-const apiCall = async (endpoint, method = 'GET', data = null) => {
-  const config = {
+const apiCall = async (endpoint, method = "GET", data) => {
+  const options = {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   };
 
-  // Add body for POST, PUT requests
-  if (data) {
-    config.body = JSON.stringify(data);
+  if (data !== undefined) {
+    options.body = JSON.stringify(data);
   }
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
-    // Check if response is OK
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+  if (!response.ok) {
+    let errorText = "";
+
+    try {
+      errorText = await response.text();
+    } catch {
+      errorText = response.statusText;
     }
-    
-    // Handle 204 No Content (for DELETE)
-    if (response.status === 204) {
-      return null;
-    }
-    
-    // Parse and return JSON
-    return await response.json();
-    
-  } catch (error) {
-    console.error('API call failed:', error);
-    throw error;
+
+    throw new Error(errorText || `HTTP ${response.status}`);
   }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type");
+
+  if (contentType && contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  return null;
 };
 
-// Job API endpoints
+/* -------------------- JOB API -------------------- */
+
 export const jobAPI = {
-  // Get all jobs
-  getAllJobs: () => apiCall('/jobs'),
-  
-  // Get single job by ID
-  getJob: (id) => apiCall(`/jobs/${id}`),
-  
-  // Create new job
-  createJob: (jobData) => apiCall('/jobs', 'POST', jobData),
-  
-  // Update existing job
-  updateJob: (id, jobData) => apiCall(`/jobs/${id}`, 'PUT', jobData),
-  
-  // Delete job
-  deleteJob: (id) => apiCall(`/jobs/${id}`, 'DELETE'),
+  getAllJobs() {
+    return apiCall("/jobs");
+  },
+
+  getJob(id) {
+    return apiCall(`/jobs/${id}`);
+  },
+
+  createJob(jobData) {
+    return apiCall("/jobs", "POST", jobData);
+  },
+
+  updateJob(id, jobData) {
+    return apiCall(`/jobs/${id}`, "PUT", jobData);
+  },
+
+  deleteJob(id) {
+    return apiCall(`/jobs/${id}`, "DELETE");
+  },
 };
 
-// AI API endpoints
+/* -------------------- AI API -------------------- */
+
 export const aiAPI = {
-  // Analyze job match
-  analyzeJob: (jobId, resume) => 
-    apiCall(`/ai/analyze/${jobId}`, 'POST', { resume }),
-  
-  // Generate cover letter
-  generateCoverLetter: (jobId, resume) => 
-    apiCall(`/ai/cover-letter/${jobId}`, 'POST', { resume }),
-  
-  // Generate application email
-  generateEmail: (jobId) => 
-    apiCall(`/ai/email/${jobId}`, 'POST'),
+  analyzeJob(jobId, resume) {
+    return apiCall(`/ai/analyze/${jobId}`, "POST", { resume });
+  },
+
+  generateCoverLetter(jobId, resume) {
+    return apiCall(`/ai/cover-letter/${jobId}`, "POST", { resume });
+  },
+
+  generateEmail(jobId) {
+    return apiCall(`/ai/email/${jobId}`, "POST");
+  },
 };

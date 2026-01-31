@@ -3,6 +3,8 @@ package com.nitin.jobtracker.service;
 import com.nitin.jobtracker.model.Job;
 import com.nitin.jobtracker.repository.JobRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class JobService {
 
     public Job getJobById(Long id) {
         return jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id));
     }
 
     public Job createJob(Job job) {

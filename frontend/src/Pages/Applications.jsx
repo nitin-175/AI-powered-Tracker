@@ -67,7 +67,29 @@ export default function Applications() {
       );
 
       if (!res.ok) {
-        throw new Error("HTTP " + res.status);
+        const errText = await res.text();
+        let msg = errText;
+        let status = res.status;
+        try {
+          const parsed = JSON.parse(errText);
+          msg = parsed.error || JSON.stringify(parsed);
+          if (parsed.status) status = parsed.status;
+        } catch (err) {
+          // ignore
+        }
+
+        if (status === 429) {
+          // Quota exceeded — show friendly message
+          let details = msg;
+          try {
+            const bodyParsed = JSON.parse(errText);
+            details = bodyParsed.body || msg;
+          } catch {}
+          alert("AI quota exceeded: " + details);
+          return;
+        }
+
+        throw new Error(msg || ("HTTP " + res.status));
       }
 
       const data = await res.json();
