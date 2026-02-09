@@ -4,7 +4,8 @@ export default function ApplicationsTable({
   onDelete,
   onAnalyze,
   aiLoading,
-  analyzingJobId
+  analyzingJobId,
+  aiAvailable = true
 }) {
 
   const getStatusStyle = (status) => {
@@ -81,12 +82,11 @@ export default function ApplicationsTable({
                 <td className="px-5 py-4 text-center">
                   <button
                     onClick={() => onAnalyze(job.id)}
-                    disabled={aiLoading && analyzingJobId === job.id}
+                    disabled={!aiAvailable || (aiLoading && analyzingJobId === job.id)}
                     className="px-4 py-1.5 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title={!aiAvailable ? "AI features unavailable" : "Analyze this job with AI"}
                   >
-                    {aiLoading && analyzingJobId === job.id
-                      ? "Analyzing..."
-                      : "Analyze"}
+                    {!aiAvailable ? "AI Unavailable" : aiLoading && analyzingJobId === job.id ? "Analyzing..." : "Analyze"}
                   </button>
                 </td>
 

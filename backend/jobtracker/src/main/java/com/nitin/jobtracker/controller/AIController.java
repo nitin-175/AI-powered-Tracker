@@ -3,11 +3,13 @@ package com.nitin.jobtracker.controller;
 import com.nitin.jobtracker.model.Job;
 import com.nitin.jobtracker.service.GeminiService;
 import com.nitin.jobtracker.service.JobService;
+import com.nitin.jobtracker.service.RateLimiterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,10 +20,14 @@ public class AIController {
 
     private final GeminiService geminiService;
     private final JobService jobService;
+    private final RateLimiterService rateLimiterService;
 
-    public AIController(GeminiService geminiService, JobService jobService) {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AIController.class);
+
+    public AIController(GeminiService geminiService, JobService jobService, RateLimiterService rateLimiterService) {
         this.geminiService = geminiService;
         this.jobService = jobService;
+        this.rateLimiterService = rateLimiterService;
     }
 
     @GetMapping("/test")
@@ -48,9 +54,26 @@ public class AIController {
         }
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        if (geminiService.isConfigured()) {
+            return ResponseEntity.ok(Map.of("status", "ok"));
+        }
+
+        return ResponseEntity.status(503).body(Map.of("status", "gemini_api_key_missing"));
+    }
+
     @PostMapping("/analyze/{jobId}")
     public ResponseEntity<Map<String, String>> analyzeJob(@PathVariable Long jobId,
-            @RequestBody(required = false) String body) {
+            @RequestBody(required = false) String body, HttpServletRequest request) {
+
+        // Rate limiting (by client IP)
+        String client = request.getRemoteAddr();
+        if (!rateLimiterService.allow(client)) {
+            logger.warn("Rate limit exceeded for {}", client);
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Rate limit exceeded", "body", "Rate limit exceeded for " + client));
+        }
         try {
             Job job = jobService.getJobById(jobId);
 
@@ -92,7 +115,14 @@ public class AIController {
 
     @PostMapping("/cover-letter/{jobId}")
     public ResponseEntity<Map<String, String>> generateCoverLetter(@PathVariable Long jobId,
-            @RequestBody(required = false) String body) {
+            @RequestBody(required = false) String body, HttpServletRequest request) {
+
+        String client = request.getRemoteAddr();
+        if (!rateLimiterService.allow(client)) {
+            logger.warn("Rate limit exceeded for {}", client);
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Rate limit exceeded", "body", "Rate limit exceeded for " + client));
+        }
         try {
             Job job = jobService.getJobById(jobId);
 
@@ -133,7 +163,14 @@ public class AIController {
     }
 
     @PostMapping("/email/{jobId}")
-    public ResponseEntity<Map<String, String>> generateEmail(@PathVariable Long jobId) {
+    public ResponseEntity<Map<String, String>> generateEmail(@PathVariable Long jobId, HttpServletRequest request) {
+
+        String client = request.getRemoteAddr();
+        if (!rateLimiterService.allow(client)) {
+            logger.warn("Rate limit exceeded for {}", client);
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Rate limit exceeded", "body", "Rate limit exceeded for " + client));
+        }
         try {
             Job job = jobService.getJobById(jobId);
 
@@ -162,7 +199,14 @@ public class AIController {
 
     @PostMapping("/improvements/{jobId}")
     public ResponseEntity<Map<String, String>> getImprovements(@PathVariable Long jobId,
-            @RequestBody(required = false) String body) {
+            @RequestBody(required = false) String body, HttpServletRequest request) {
+
+        String client = request.getRemoteAddr();
+        if (!rateLimiterService.allow(client)) {
+            logger.warn("Rate limit exceeded for {}", client);
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Rate limit exceeded", "body", "Rate limit exceeded for " + client));
+        }
         try {
             Job job = jobService.getJobById(jobId);
 

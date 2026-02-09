@@ -16,9 +16,27 @@ export default function Applications() {
   const [aiResult, setAiResult] = useState(null);
   const [aiRaw, setAiRaw] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [analyzingJobId, setAnalyzingJobId] = useState(null);
+  const [aiAvailable, setAiAvailable] = useState(true); // true = available, false = not available
 
   useEffect(() => {
     loadJobs();
+
+    // Check AI health on mount
+    (async function checkAI() {
+      try {
+        const res = await fetch("http://localhost:8080/api/ai/health");
+        if (res.ok) {
+          const json = await res.json();
+          setAiAvailable(json.status === "ok");
+        } else {
+          setAiAvailable(false);
+        }
+      } catch (err) {
+        setAiAvailable(false);
+      }
+    })();
+
   }, []);
 
   const loadJobs = async () => {
@@ -50,9 +68,15 @@ export default function Applications() {
 
   // ✅ FIXED AI CALL (robust + safe)
   const analyzeJobAI = async (jobId) => {
+    if (aiAvailable === false) {
+      alert("AI features are currently unavailable. Check backend health or set GEMINI_API_KEY.");
+      return;
+    }
+
     setAiLoading(true);
     setAiResult(null);
     setAiRaw("");
+    setAnalyzingJobId(jobId);
     try {
       const res = await fetch(
         `http://localhost:8080/api/ai/analyze/${jobId}`,
@@ -89,6 +113,12 @@ export default function Applications() {
           return;
         }
 
+        if (status === 503) {
+          alert("AI backend not configured (GEMINI_API_KEY missing). See backend logs or documentation.");
+          setAiAvailable(false);
+          return;
+        }
+
         throw new Error(msg || ("HTTP " + res.status));
       }
 
@@ -121,6 +151,7 @@ export default function Applications() {
       alert("AI request failed");
     } finally {
       setAiLoading(false);
+      setAnalyzingJobId(null);
     }
   };
 
@@ -161,12 +192,42 @@ export default function Applications() {
         </select>
       </div>
 
+      {/* AI health banner */}
+      {aiAvailable === false && (
+        <div className="mb-4 p-3 rounded bg-red-100 border border-red-200 text-red-800 flex items-center justify-between">
+          <div>
+            <strong>AI features unavailable:</strong> GEMINI_API_KEY is not configured on the backend. AI analysis and cover-letter generation are disabled until configured.
+          </div>
+          <div className="ml-4">
+            <button
+              onClick={async () => {
+                // recheck health
+                try {
+                  const r = await fetch("http://localhost:8080/api/ai/health");
+                  if (r.ok) {
+                    const j = await r.json();
+                    setAiAvailable(j.status === "ok");
+                  } else setAiAvailable(false);
+                } catch {
+                  setAiAvailable(false);
+                }
+              }}
+              className="px-3 py-1 rounded bg-red-600 text-white"
+            >
+              Recheck
+            </button>
+          </div>
+        </div>
+      )}
+
       <ApplicationsTable
         jobs={filteredJobs}
         onEdit={setEditingJob}
         onDelete={handleDelete}
         onAnalyze={analyzeJobAI}
         aiLoading={aiLoading}
+        analyzingJobId={analyzingJobId}
+        aiAvailable={aiAvailable}
       />
 
       {editingJob && (
