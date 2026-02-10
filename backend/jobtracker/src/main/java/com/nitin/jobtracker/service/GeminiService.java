@@ -85,6 +85,8 @@ public class GeminiService implements InitializingBean {
 
     String result = callOllama(prompt, true);
     return normalizeScore(result);
+
+    
 }
 
 
