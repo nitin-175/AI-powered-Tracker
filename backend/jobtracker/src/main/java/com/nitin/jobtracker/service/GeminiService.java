@@ -47,22 +47,46 @@ public class GeminiService implements InitializingBean {
 
     public String analyzeJobMatch(String jobDescription, String resume) {
 
-        String prompt =
-                "You are an ATS system.\n" +
-                "Return ONLY a valid JSON object. Do NOT add any text before or after the JSON.\n" +
-                "The JSON must exactly follow this structure:\n" +
-                "{\n" +
-                "  \"matchScore\": integer between 0 and 100,\n" +
-                "  \"strengths\": [string],\n" +
-                "  \"improvements\": [string],\n" +
-                "  \"keySkillsToHighlight\": [string]\n" +
-                "}\n\n" +
-                "JOB:\n" + limit(jobDescription, 1500) + "\n\n" +
-                "RESUME:\n" + limit(resume, 1500);
+    String prompt =
+            "You are an experienced technical recruiter and ATS evaluator.\n" +
+            "Analyze the RESUME strictly against the JOB description.\n\n" +
 
-        String result = callOllama(prompt, true);
-        return normalizeScore(result);
-    }
+            "Rules:\n" +
+            "- Base every point only on the provided resume and job description.\n" +
+            "- Do not guess missing experience.\n" +
+            "- Be specific and practical.\n" +
+            "- Return ONLY valid JSON.\n\n" +
+
+            "Return JSON in this exact format:\n" +
+            "{\n" +
+            "  \"matchScore\": integer between 0 and 100,\n" +
+            "  \"strengths\": [\n" +
+            "    \"Concrete strengths matching job requirements\"\n" +
+            "  ],\n" +
+            "  \"missingOrWeakSkills\": [\n" +
+            "    \"Important job skills missing or weak in resume\"\n" +
+            "  ],\n" +
+            "  \"improvements\": [\n" +
+            "    \"Actionable resume improvements (what to add/change and where)\"\n" +
+            "  ],\n" +
+            "  \"projectSuggestions\": [\n" +
+            "    \"Specific project ideas to fill job gaps\"\n" +
+            "  ],\n" +
+            "  \"resumeLineExamples\": [\n" +
+            "    \"Example bullet lines the candidate can directly add to resume\"\n" +
+            "  ],\n" +
+            "  \"keySkillsToHighlight\": [\n" +
+            "    \"Exact skills and tools to highlight for this job\"\n" +
+            "  ]\n" +
+            "}\n\n" +
+
+            "JOB DESCRIPTION:\n" + limit(jobDescription, 200) + "\n\n" +
+            "RESUME:\n" + limit(resume, 200);
+
+    String result = callOllama(prompt, true);
+    return normalizeScore(result);
+}
+
 
     public String generateCoverLetter(String company, String role, String jobDescription, String resume) {
 
@@ -107,10 +131,11 @@ public class GeminiService implements InitializingBean {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("prompt", prompt);
-        body.put("temperature", cleanJson ? 0.0 : 0.6);
-        body.put("num_predict", cleanJson ? 180 : 350);
-        body.put("keep_alive", "10m");
+        body.put("keep_alive", "120m");
         body.put("stream", false);
+        body.put("temperature", 0.2);
+        body.put("num_predict", 200);
+
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
