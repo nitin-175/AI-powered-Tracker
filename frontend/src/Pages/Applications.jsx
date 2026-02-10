@@ -69,7 +69,7 @@ export default function Applications() {
   // ✅ FIXED AI CALL (robust + safe)
   const analyzeJobAI = async (jobId) => {
     if (aiAvailable === false) {
-      alert("AI features are currently unavailable. Check backend health or set GEMINI_API_KEY.");
+      alert("AI features are currently unavailable.");
       return;
     }
 
@@ -77,6 +77,7 @@ export default function Applications() {
     setAiResult(null);
     setAiRaw("");
     setAnalyzingJobId(jobId);
+
     try {
       const res = await fetch(
         `http://localhost:8080/api/ai/analyze/${jobId}`,
@@ -85,7 +86,7 @@ export default function Applications() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             resume:
-              "Full-stack developer with Java, Spring Boot and React. Built AI powered job tracker."
+              "Full-stack developer with Java, Spring Boot, tailwind css, rest api, MERN stack and React. Built AI powered job tracker."
           })
         }
       );
@@ -94,27 +95,20 @@ export default function Applications() {
         const errText = await res.text();
         let msg = errText;
         let status = res.status;
+
         try {
           const parsed = JSON.parse(errText);
           msg = parsed.error || JSON.stringify(parsed);
           if (parsed.status) status = parsed.status;
-        } catch (err) {
-          // ignore
-        }
+        } catch { }
 
         if (status === 429) {
-          // Quota exceeded — show friendly message
-          let details = msg;
-          try {
-            const bodyParsed = JSON.parse(errText);
-            details = bodyParsed.body || msg;
-          } catch {}
-          alert("AI quota exceeded: " + details);
+          alert("AI quota exceeded: " + msg);
           return;
         }
 
         if (status === 503) {
-          alert("AI backend not configured (GEMINI_API_KEY missing). See backend logs or documentation.");
+          alert("AI backend not configured.");
           setAiAvailable(false);
           return;
         }
@@ -129,20 +123,29 @@ export default function Applications() {
         return;
       }
 
-      const raw = data.analysis || "";
-      setAiRaw(raw);
+      const analysis = data.analysis;
 
-      let parsed = null;
+      if (analysis && typeof analysis === "object") {
 
-      try {
-        const clean = raw.replace(/```json|```/g, "").trim();
-        parsed = JSON.parse(clean);
-      } catch {
-        // Gemini sometimes returns plain text
-        parsed = null;
+        const toArray = (v) => Array.isArray(v) ? v : v ? [v] : [];
+
+        const normalized = {
+          ...analysis,
+          strengths: toArray(analysis.strengths),
+          improvements: toArray(analysis.improvements),
+          missingOrWeakSkills: toArray(analysis.missingOrWeakSkills),
+          projectSuggestions: toArray(analysis.projectSuggestions),
+          resumeLineExamples: toArray(analysis.resumeLineExamples),
+          keySkillsToHighlight: toArray(analysis.keySkillsToHighlight)
+        };
+
+        setAiResult(normalized);
+        setAiRaw("");
+      } else {
+        setAiResult(null);
+        setAiRaw(analysis ? String(analysis) : "");
       }
 
-      setAiResult(parsed);
       setSelectedJob(jobs.find((j) => j.id === jobId));
       setShowAIModal(true);
 
@@ -154,6 +157,7 @@ export default function Applications() {
       setAnalyzingJobId(null);
     }
   };
+
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =

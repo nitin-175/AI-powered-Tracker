@@ -30,8 +30,7 @@ public class GeminiService implements InitializingBean {
 
     private final Gson gson = new Gson();
 
-    private static final org.slf4j.Logger logger =
-            org.slf4j.LoggerFactory.getLogger(GeminiService.class);
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(GeminiService.class);
 
     private final AtomicLong totalRequests = new AtomicLong(0);
     private final AtomicLong totalErrors = new AtomicLong(0);
@@ -47,78 +46,60 @@ public class GeminiService implements InitializingBean {
 
     public String analyzeJobMatch(String jobDescription, String resume) {
 
-    String prompt =
-            "You are an experienced technical recruiter and ATS evaluator.\n" +
-            "Analyze the RESUME strictly against the JOB description.\n\n" +
+        String prompt = "You are an experienced technical recruiter and ATS evaluator.\n" +
+                "Use ONLY the information present in the resume and the job description.\n" +
+                "Do NOT invent skills, tools or experience.\n" +
+                "Rules:\n" +
+                "- Base every point only on the provided resume and job description.\n" +
+                "- Do not guess missing experience.\n" +
+                "- Be specific and practical.\n" +
+                "- Return ONLY valid JSON.\n\n" +
+                "Return JSON in this exact format:\n" +
+                "{\n" +
+                "  \"matchScore\": integer between 0 and 100,\n" +
+                "  \"strengths\": [string],\n" +
+                "  \"missingOrWeakSkills\": [string],\n" +
+                "  \"improvements\": [string],\n" +
+                "  \"projectSuggestions\": [string],\n" +
+                "  \"resumeLineExamples\": [string],\n" +
+                "  \"keySkillsToHighlight\": [string]\n" +
+                "}\n\n" +
+                "JOB:\n" + limit(jobDescription, 1800) + "\n\n" +
+                "RESUME:\n" + limit(resume, 1800);
 
-            "Rules:\n" +
-            "- Base every point only on the provided resume and job description.\n" +
-            "- Do not guess missing experience.\n" +
-            "- Be specific and practical.\n" +
-            "- Return ONLY valid JSON.\n\n" +
-
-            "Return JSON in this exact format:\n" +
-            "{\n" +
-            "  \"matchScore\": integer between 0 and 100,\n" +
-            "  \"strengths\": [\n" +
-            "    \"Concrete strengths matching job requirements\"\n" +
-            "  ],\n" +
-            "  \"missingOrWeakSkills\": [\n" +
-            "    \"Important job skills missing or weak in resume\"\n" +
-            "  ],\n" +
-            "  \"improvements\": [\n" +
-            "    \"Actionable resume improvements (what to add/change and where)\"\n" +
-            "  ],\n" +
-            "  \"projectSuggestions\": [\n" +
-            "    \"Specific project ideas to fill job gaps\"\n" +
-            "  ],\n" +
-            "  \"resumeLineExamples\": [\n" +
-            "    \"Example bullet lines the candidate can directly add to resume\"\n" +
-            "  ],\n" +
-            "  \"keySkillsToHighlight\": [\n" +
-            "    \"Exact skills and tools to highlight for this job\"\n" +
-            "  ]\n" +
-            "}\n\n" +
-
-            "JOB DESCRIPTION:\n" + limit(jobDescription, 200) + "\n\n" +
-            "RESUME:\n" + limit(resume, 200);
-
-    String result = callOllama(prompt, true);
-    return normalizeScore(result);
-
-    
-}
-
+        String result = callOllama(prompt, true, 180);
+        return normalizeScore(result);
+    }
 
     public String generateCoverLetter(String company, String role, String jobDescription, String resume) {
 
-        String prompt =
-                "Write a professional ATS-friendly cover letter of 180 to 220 words for the role of " +
-                        role + " at " + company + ".\n\nJOB:\n" +
-                        limit(jobDescription, 3000) + "\n\nRESUME:\n" + limit(resume, 3000);
+        String prompt = "Write a professional ATS-friendly cover letter of 180 to 220 words for the role of " +
+                role + " at " + company + ".\n\nJOB:\n" +
+                limit(jobDescription, 2500) + "\n\nRESUME:\n" +
+                limit(resume, 2500);
 
-        return callOllama(prompt, false);
+        return callOllama(prompt, false, 300);
     }
 
     public String generateApplicationEmail(String company, String role, String hiringManager) {
 
-        String prompt =
-                "Write a short and professional job application email for the role of " +
-                        role + " at " + company + " addressed to " + hiringManager + ".";
+        String prompt = "Write a short and professional job application email for the role of " +
+                role + " at " + company + " addressed to " + hiringManager + ".";
 
-        return callOllama(prompt, false);
+        return callOllama(prompt, false, 180);
     }
 
     public String getResumeImprovements(String jobDescription, String resume) {
 
-        String prompt =
-                "Based on the JOB and RESUME, list clear bullet points for resume improvements.\n\n" +
-                        "JOB:\n" + limit(jobDescription, 3000) + "\n\nRESUME:\n" + limit(resume, 3000);
+        String prompt = "Based on the JOB and RESUME, list clear and actionable bullet points for resume improvements.\n\n"
+                +
+                "JOB:\n" + limit(jobDescription, 2000) + "\n\nRESUME:\n" +
+                limit(resume, 2000);
 
-        return callOllama(prompt, false);
+        return callOllama(prompt, false, 220);
     }
 
-    private String callOllama(String prompt, boolean cleanJson) {
+    private String callOllama(String prompt, boolean cleanJson, int maxTokens) {
 
         if (ollamaApiUrl == null || ollamaApiUrl.isBlank()) {
             return error("Ollama API URL is not configured");
@@ -133,11 +114,9 @@ public class GeminiService implements InitializingBean {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("prompt", prompt);
-        body.put("keep_alive", "120m");
+        body.put("temperature", cleanJson ? 0.2 : 0.6);
+        body.put("num_predict", maxTokens);
         body.put("stream", false);
-        body.put("temperature", 0.2);
-        body.put("num_predict", 200);
-
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -147,8 +126,7 @@ public class GeminiService implements InitializingBean {
 
         try {
 
-            ResponseEntity<String> response =
-                    restTemplate.postForEntity(url, request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 return error("Empty response from Ollama");
@@ -156,29 +134,23 @@ public class GeminiService implements InitializingBean {
 
             String raw = response.getBody();
 
-            try {
+            JsonElement element = gson.fromJson(raw, JsonElement.class);
 
-                JsonElement element = gson.fromJson(raw, JsonElement.class);
+            if (element != null && element.isJsonObject()) {
 
-                if (element != null && element.isJsonObject()) {
+                JsonObject obj = element.getAsJsonObject();
 
-                    JsonObject obj = element.getAsJsonObject();
-
-                    if (obj.has("response")) {
-                        return clean(obj.get("response").getAsString(), cleanJson);
-                    }
-
-                    if (obj.has("output")) {
-                        return clean(obj.get("output").getAsString(), cleanJson);
-                    }
-
-                    if (obj.has("text")) {
-                        return clean(obj.get("text").getAsString(), cleanJson);
-                    }
+                if (obj.has("response")) {
+                    return clean(obj.get("response").getAsString(), cleanJson);
                 }
 
-            } catch (Exception ex) {
-                return error("Invalid JSON received from Ollama", raw);
+                if (obj.has("output")) {
+                    return clean(obj.get("output").getAsString(), cleanJson);
+                }
+
+                if (obj.has("text")) {
+                    return clean(obj.get("text").getAsString(), cleanJson);
+                }
             }
 
             return clean(raw, cleanJson);
@@ -190,8 +162,7 @@ public class GeminiService implements InitializingBean {
             return error(
                     "Ollama HTTP error",
                     "status=" + e.getStatusCode().value(),
-                    e.getResponseBodyAsString()
-            );
+                    e.getResponseBodyAsString());
 
         } catch (Exception e) {
 
@@ -227,8 +198,7 @@ public class GeminiService implements InitializingBean {
 
             HttpEntity<Void> request = new HttpEntity<>(headers);
 
-            ResponseEntity<String> response =
-                    restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 return error("Empty model list from Ollama");
@@ -241,8 +211,7 @@ public class GeminiService implements InitializingBean {
             return error(
                     "Ollama HTTP error",
                     "status=" + e.getStatusCode().value(),
-                    e.getResponseBodyAsString()
-            );
+                    e.getResponseBodyAsString());
 
         } catch (Exception e) {
 
@@ -255,7 +224,8 @@ public class GeminiService implements InitializingBean {
     }
 
     private String limit(String text, int max) {
-        if (text == null) return "";
+        if (text == null)
+            return "";
         return text.length() <= max ? text : text.substring(0, max);
     }
 
@@ -274,9 +244,8 @@ public class GeminiService implements InitializingBean {
     }
 
     private String clean(String text, boolean cleanJson) {
-        if (!cleanJson || text == null) {
+        if (!cleanJson || text == null)
             return text;
-        }
         return text.replace("```json", "").replace("```", "").trim();
     }
 

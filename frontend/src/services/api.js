@@ -65,9 +65,32 @@ export const jobAPI = {
 
 /* -------------------- AI API -------------------- */
 
+const normalizeAnalysis = (analysis) => {
+  if (!analysis || typeof analysis !== "object") return analysis;
+
+  const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
+  return {
+    ...analysis,
+    strengths: toArray(analysis.strengths),
+    improvements: toArray(analysis.improvements),
+    missingOrWeakSkills: toArray(analysis.missingOrWeakSkills),
+    projectSuggestions: toArray(analysis.projectSuggestions),
+    resumeLineExamples: toArray(analysis.resumeLineExamples),
+    keySkillsToHighlight: toArray(analysis.keySkillsToHighlight),
+  };
+};
+
 export const aiAPI = {
-  analyzeJob(jobId, resume) {
-    return apiCall(`/ai/analyze/${jobId}`, "POST", { resume });
+  analyzeJob: async (jobId, resume) => {
+    const data = await apiCall(`/ai/analyze/${jobId}`, "POST", { resume });
+
+    if (!data || !data.analysis) return data;
+
+    return {
+      ...data,
+      analysis: normalizeAnalysis(data.analysis),
+    };
   },
 
   generateCoverLetter(jobId, resume) {
