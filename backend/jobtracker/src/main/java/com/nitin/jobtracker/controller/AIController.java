@@ -221,14 +221,16 @@ public class AIController {
     }
 
     private ResponseEntity<?> buildError(String json) {
-        try {
-            JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-            int status = obj.has("status") ? obj.get("status").getAsInt() : 502;
-            return ResponseEntity.status(status).body(obj);
-        } catch (Exception e) {
-            return ResponseEntity.status(502).body(Map.of("error", json));
-        }
+    try {
+        Map<String, Object> map = gson.fromJson(json, Map.class);
+        Object statusObj = map.get("status");
+        int status = statusObj instanceof Number ? ((Number) statusObj).intValue() : 502;
+        return ResponseEntity.status(status).body(map);
+    } catch (Exception e) {
+        return ResponseEntity.status(502).body(Map.of("error", json));
     }
+}
+
 
     private String extractResume(String body) {
         if (body == null || body.isBlank())
