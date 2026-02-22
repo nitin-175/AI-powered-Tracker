@@ -88,7 +88,7 @@ export default function Analytics() {
   }, [jobs]);
 
   if (loading) return <SkeletonLoader />;
-
+ 
   return (
     <div className="min-h-screen bg-[#FDFDFD] md:ml-64 font-sans text-black selection:bg-amber-200/50 mt-10">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 space-y-10">
