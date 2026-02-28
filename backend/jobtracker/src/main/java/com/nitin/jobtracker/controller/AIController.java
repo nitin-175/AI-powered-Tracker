@@ -1,8 +1,6 @@
 package com.nitin.jobtracker.controller;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.nitin.jobtracker.model.Job;
 import com.nitin.jobtracker.service.GeminiService;
 import com.nitin.jobtracker.service.JobService;
@@ -17,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AIController {
 
     private final GeminiService geminiService;
@@ -54,6 +51,7 @@ public class AIController {
     }
 
     @PostMapping("/analyze/{jobId}")
+    @SuppressWarnings("unchecked")
     public ResponseEntity<?> analyzeJob(@PathVariable Long jobId,
             @RequestBody(required = false) String body,
             HttpServletRequest request) {
@@ -221,16 +219,15 @@ public class AIController {
     }
 
     private ResponseEntity<?> buildError(String json) {
-    try {
-        Map<String, Object> map = gson.fromJson(json, Map.class);
-        Object statusObj = map.get("status");
-        int status = statusObj instanceof Number ? ((Number) statusObj).intValue() : 502;
-        return ResponseEntity.status(status).body(map);
-    } catch (Exception e) {
-        return ResponseEntity.status(502).body(Map.of("error", json));
+        try {
+            Map<String, Object> map = gson.fromJson(json, Map.class);
+            Object statusObj = map.get("status");
+            int status = statusObj instanceof Number ? ((Number) statusObj).intValue() : 502;
+            return ResponseEntity.status(status).body(map);
+        } catch (Exception e) {
+            return ResponseEntity.status(502).body(Map.of("error", json));
+        }
     }
-}
-
 
     private String extractResume(String body) {
         if (body == null || body.isBlank())

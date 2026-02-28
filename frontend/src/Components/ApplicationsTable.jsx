@@ -3,6 +3,7 @@ export default function ApplicationsTable({
   onEdit,
   onDelete,
   onAnalyze,
+  onAutoApply, // new callback
   aiLoading,
   analyzingJobId,
   aiAvailable = true
@@ -104,6 +105,14 @@ export default function ApplicationsTable({
                   >
                     Delete
                   </button>
+                  {onAutoApply && (
+                    <button
+                      onClick={() => onAutoApply(job)}
+                      className="ml-2 px-3 py-1.5 rounded-md text-white bg-green-500 hover:bg-green-600 transition"
+                    >
+                      Apply
+                    </button>
+                  )}
                 </td>
               </tr>
             ))

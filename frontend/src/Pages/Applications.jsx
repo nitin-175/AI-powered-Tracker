@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { jobAPI } from "../services/api";
 import ApplicationsTable from "../components/ApplicationsTable";
 import EditApplicationModal from "../components/EditApplicationModal";
+import AutoApply from "./AutoApply"; // new for in-context apply
 
 export default function Applications() {
   const [jobs, setJobs] = useState([]);
@@ -10,6 +11,7 @@ export default function Applications() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [editingJob, setEditingJob] = useState(null);
+  const [showAutoApply, setShowAutoApply] = useState(false);
 
   const [showAIModal, setShowAIModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -32,7 +34,7 @@ export default function Applications() {
         } else {
           setAiAvailable(false);
         }
-      } catch (err) {
+      } catch {
         setAiAvailable(false);
       }
     })();
@@ -64,6 +66,11 @@ export default function Applications() {
       prev.map((j) => (j.id === saved.id ? saved : j))
     );
     setEditingJob(null);
+  };
+
+  const handleAutoApply = (job) => {
+    setSelectedJob(job);
+    setShowAutoApply(true);
   };
 
   // ✅ FIXED AI CALL (robust + safe)
@@ -100,7 +107,7 @@ export default function Applications() {
           const parsed = JSON.parse(errText);
           msg = parsed.error || JSON.stringify(parsed);
           if (parsed.status) status = parsed.status;
-        } catch { }
+        } catch { /* ignore malformed JSON */ }
 
         if (status === 429) {
           alert("AI quota exceeded: " + msg);
@@ -229,6 +236,7 @@ export default function Applications() {
         onEdit={setEditingJob}
         onDelete={handleDelete}
         onAnalyze={analyzeJobAI}
+        onAutoApply={handleAutoApply}
         aiLoading={aiLoading}
         analyzingJobId={analyzingJobId}
         aiAvailable={aiAvailable}
@@ -240,6 +248,21 @@ export default function Applications() {
           onClose={() => setEditingJob(null)}
           onSave={handleSaveEdit}
         />
+      )}
+
+      {/* ✅ AUTO-APPLY MODAL */}
+      {showAutoApply && selectedJob && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-y-auto shadow-xl">
+            <div className="bg-green-600 text-white p-5 rounded-t-2xl flex justify-between">
+              <div className="text-xl font-semibold">Auto-Apply</div>
+              <button onClick={() => setShowAutoApply(false)}>✕</button>
+            </div>
+            <div className="p-6">
+              <AutoApply selectedJob={selectedJob} />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ✅ AI MODAL */}

@@ -1,5 +1,5 @@
 // src/pages/Analytics.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { jobAPI } from "../services/api";
 
 const STATUSES = ["Applied", "Interview", "Offer", "Rejected"];
@@ -9,11 +9,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("all");
 
-  useEffect(() => {
-    fetchJobs();
-  }, [timeRange]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       const data = await jobAPI.getAllJobs();
       setJobs(filterByTime(data, timeRange));
@@ -22,7 +18,11 @@ export default function Analytics() {
     } finally {
       setTimeout(() => setLoading(false), 600);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const filterByTime = (jobs, range) => {
     if (range === "all") return jobs;

@@ -1,19 +1,23 @@
 
 import JobTable from "../Components/JobTable";
 import StatCard from "../Components/StatCard";
+import ResumeBuilder from "../Components/ResumeBuilder";
+import AutoApply from "../Pages/AutoApply"; // reuse page component
 import { fetchJobs } from "../services/jobService";
 import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showResumeBuilder, setShowResumeBuilder] = useState(false);
+  const [showAutoApply, setShowAutoApply] = useState(false);
 
   useEffect(() => {
     const loadJobs = async () => {
       try {
         const data = await fetchJobs();
         setJobs(data);
-      } catch (err) {
+      } catch {
         console.error("Failed to load jobs");
       } finally {
         setLoading(false);
@@ -61,6 +65,41 @@ export default function Dashboard() {
 
      
 
+
+      {/* quick access buttons */}
+      <div className="p-5 flex gap-4 ml-70">
+        <button
+          onClick={() => setShowResumeBuilder(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Resume Builder
+        </button>
+        <button
+          onClick={() => setShowAutoApply(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+        >
+          Auto Apply
+        </button>
+      </div>
+
+      {showResumeBuilder && (
+        <div className="p-5 bg-gray-50 rounded-lg shadow-inner">
+          <button
+            onClick={() => setShowResumeBuilder(false)}
+            className="text-red-500 mb-2"
+          >Close</button>
+          <ResumeBuilder />
+        </div>
+      )}
+      {showAutoApply && (
+        <div className="p-5 bg-gray-50 rounded-lg shadow-inner">
+          <button
+            onClick={() => setShowAutoApply(false)}
+            className="text-red-500 mb-2"
+          >Close</button>
+          <AutoApply />
+        </div>
+      )}
 
       <JobTable/>
     </>

@@ -1,9 +1,7 @@
 // src/pages/Settings.jsx - REFINED PREMIUM VERSION
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
   
   const [profile, setProfile] = useState({
     name: 'Your Name',

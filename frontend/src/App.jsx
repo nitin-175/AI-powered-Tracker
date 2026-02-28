@@ -8,16 +8,9 @@ import Settings from './Pages/Settings';
 import DashboardLayout from './Components/DashboardLayout';
 import ResumeMaker from './Pages/ResumeMaker';
 import AutoApply from './Pages/AutoApply';
-import { useState } from 'react';
 
 function App() {
-
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [showLogout, setShowLogout] = useState(false);
-
-  if (!isLoggedIn && showLogout) {
-    return <LogoutPopup />;
-  }
+  // removed unused login/logout state to satisfy lint rules
 
   return (
     <div>

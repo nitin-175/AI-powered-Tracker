@@ -29,7 +29,7 @@ export default function AddJob() {
     try {
       await addJob(formData);
       navigate("/applications"); // redirect after success
-    } catch (error) {
+    } catch {
       alert("Failed to add job");
     } finally {
       setLoading(false);
